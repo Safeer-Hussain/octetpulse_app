@@ -24,7 +24,7 @@ This backlog defines the 25 granular daily engineering sprints for OctetPulse. E
   - Add playback scrubber and waveform playback HUD in `VoipHubView`.
   - Unit tests for recording state transitions and playback duration.
 
-- [ ] **Sprint 4: Peer-to-Peer Shift Swap Negotiation Engine**
+- [x] **Sprint 4: Peer-to-Peer Shift Swap Negotiation Engine**
   - Allow employees to propose shift swaps with team members in the same department.
   - Real-time status tracking (Proposed, Countered, Accepted, Lead Approved).
   - Push notifications simulation via BLoC stream and SQLite persistence.

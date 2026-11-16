@@ -10,6 +10,9 @@ import '../../../core/utils/app_formatters.dart';
 import '../bloc/attendance_bloc.dart';
 import '../bloc/attendance_event.dart';
 import '../bloc/attendance_state.dart';
+import '../../shift_swap/bloc/shift_swap_bloc.dart';
+import '../../shift_swap/bloc/shift_swap_state.dart';
+import '../../shift_swap/views/shift_swap_exchange_view.dart';
 import 'leave_request_modal.dart';
 
 class AttendanceCockpitView extends StatefulWidget {
@@ -22,6 +25,7 @@ class AttendanceCockpitView extends StatefulWidget {
 class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
   Timer? _ticker;
   int _elapsedSeconds = 0;
+  int _viewMode = 0; // 0 = Clock-In & Roster, 1 = Shift Swap Exchange
 
   @override
   void initState() {
@@ -72,6 +76,15 @@ class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
         final isLandscape =
             MediaQuery.of(context).orientation == Orientation.landscape;
 
+        if (_viewMode == 1) {
+          return Column(
+            children: [
+              _buildModeSwitcher(context, isLandscape),
+              const Expanded(child: ShiftSwapExchangeView()),
+            ],
+          );
+        }
+
         return Scaffold(
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'fab_attendance_clockin',
@@ -96,9 +109,57 @@ class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
               state.isClockedIn ? 'Clock Out Shift' : 'Clock In Shift',
             ),
           ),
-          body: isLandscape
-              ? _buildLandscapeLayout(context, state)
-              : _buildPortraitLayout(context, state),
+          body: Column(
+            children: [
+              _buildModeSwitcher(context, isLandscape),
+              Expanded(
+                child: isLandscape
+                    ? _buildLandscapeLayout(context, state)
+                    : _buildPortraitLayout(context, state),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModeSwitcher(BuildContext context, bool isLandscape) {
+    return BlocBuilder<ShiftSwapBloc, ShiftSwapState>(
+      builder: (context, swapState) {
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isLandscape ? 12 : 16,
+            vertical: isLandscape ? 4 : 8,
+          ),
+          child: SegmentedButton<int>(
+            segments: [
+              const ButtonSegment<int>(
+                value: 0,
+                icon: Icon(Icons.timer_outlined, size: 16),
+                label: Text(
+                  'Attendance & Roster',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+              ButtonSegment<int>(
+                value: 1,
+                icon: Badge(
+                  isLabelVisible: swapState.pendingCount > 0,
+                  label: Text(swapState.pendingCount.toString()),
+                  child: const Icon(Icons.swap_horiz, size: 16),
+                ),
+                label: const Text(
+                  'Shift Swap Exchange',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+            selected: {_viewMode},
+            onSelectionChanged: (val) {
+              setState(() => _viewMode = val.first);
+            },
+          ),
         );
       },
     );
@@ -112,12 +173,76 @@ class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildCockpitCard(context, state),
+          const SizedBox(height: 12),
+          _buildQuickSwapBanner(context),
           const SizedBox(height: 16),
           _buildWeeklyTrendChart(context),
           const SizedBox(height: 16),
           _buildApprovalQueue(context, state),
           const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickSwapBanner(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Card(
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.swap_horiz,
+                size: 18,
+                color: colorScheme.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Peer-to-Peer Shift Swap Engine',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    'Need to trade shifts? Negotiate with colleagues in your department.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.tonal(
+              onPressed: () => setState(() => _viewMode = 1),
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+              ),
+              child: const Text('Exchange', style: TextStyle(fontSize: 11)),
+            ),
+          ],
+        ),
       ),
     );
   }

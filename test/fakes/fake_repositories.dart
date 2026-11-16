@@ -7,6 +7,8 @@ import 'package:octet_pulse_app/domain/entities/field_agent.dart';
 import 'package:octet_pulse_app/domain/entities/geofence_zone.dart';
 import 'package:octet_pulse_app/domain/entities/leave_request.dart';
 import 'package:octet_pulse_app/domain/entities/payroll_record.dart';
+import 'package:octet_pulse_app/domain/entities/shift_swap_notification.dart';
+import 'package:octet_pulse_app/domain/entities/shift_swap_proposal.dart';
 import 'package:octet_pulse_app/domain/entities/voip_call_log.dart';
 import 'package:octet_pulse_app/domain/entities/voip_recording.dart';
 import 'package:octet_pulse_app/domain/entities/voip_telemetry.dart';
@@ -14,6 +16,7 @@ import 'package:octet_pulse_app/domain/repositories/attendance_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/dispatch_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/geofence_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/payroll_repository.dart';
+import 'package:octet_pulse_app/domain/repositories/shift_swap_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/voip_repository.dart';
 
 class FakeAttendanceRepository implements AttendanceRepository {
@@ -303,5 +306,121 @@ class FakeGeofenceRepository implements GeofenceRepository {
   @override
   Future<void> setActiveGeofenceZone(String zoneId) async {
     zones = zones.map((z) => z.copyWith(isActive: z.id == zoneId)).toList();
+  }
+}
+
+class FakeShiftSwapRepository implements ShiftSwapRepository {
+  List<ShiftSwapProposal> proposals = [];
+  List<ShiftSwapNotification> notifications = [];
+  final _notifCtrl = StreamController<ShiftSwapNotification>.broadcast();
+
+  @override
+  Stream<ShiftSwapNotification> get notificationStream => _notifCtrl.stream;
+
+  void emitNotification(ShiftSwapNotification n) => _notifCtrl.add(n);
+
+  @override
+  Future<List<ShiftSwapProposal>> getProposals() async => proposals;
+
+  @override
+  Future<ShiftSwapProposal> createProposal(ShiftSwapProposal proposal) async {
+    proposals.insert(0, proposal);
+    final n = ShiftSwapNotification(
+      id: 'NOTIF-${DateTime.now().millisecondsSinceEpoch}',
+      proposalId: proposal.id,
+      title: 'New Proposal',
+      message: 'Shift swap proposed',
+      timestamp: DateTime.now(),
+    );
+    notifications.insert(0, n);
+    _notifCtrl.add(n);
+    return proposal;
+  }
+
+  @override
+  Future<ShiftSwapProposal> counterProposal({
+    required String proposalId,
+    required DateTime newTargetShiftDate,
+    required ShiftType newTargetShiftType,
+    required String counterReason,
+  }) async {
+    final idx = proposals.indexWhere((p) => p.id == proposalId);
+    final current = proposals[idx];
+    final updated = current.copyWith(
+      targetShiftDate: newTargetShiftDate,
+      targetShiftType: newTargetShiftType,
+      counterReason: counterReason,
+      status: ShiftSwapStatus.countered,
+      updatedAt: DateTime.now(),
+    );
+    proposals[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<ShiftSwapProposal> acceptProposal(String proposalId) async {
+    final idx = proposals.indexWhere((p) => p.id == proposalId);
+    final current = proposals[idx];
+    final updated = current.copyWith(
+      status: ShiftSwapStatus.accepted,
+      updatedAt: DateTime.now(),
+    );
+    proposals[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<ShiftSwapProposal> approveProposalByLead({
+    required String proposalId,
+    required String leadName,
+  }) async {
+    final idx = proposals.indexWhere((p) => p.id == proposalId);
+    final current = proposals[idx];
+    final updated = current.copyWith(
+      status: ShiftSwapStatus.leadApproved,
+      approvedByLeadName: leadName,
+      updatedAt: DateTime.now(),
+    );
+    proposals[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<ShiftSwapProposal> rejectProposal({
+    required String proposalId,
+    required String rejectionReason,
+  }) async {
+    final idx = proposals.indexWhere((p) => p.id == proposalId);
+    final current = proposals[idx];
+    final updated = current.copyWith(
+      status: ShiftSwapStatus.rejected,
+      rejectionReason: rejectionReason,
+      updatedAt: DateTime.now(),
+    );
+    proposals[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<ShiftSwapProposal> cancelProposal(String proposalId) async {
+    final idx = proposals.indexWhere((p) => p.id == proposalId);
+    final current = proposals[idx];
+    final updated = current.copyWith(
+      status: ShiftSwapStatus.cancelled,
+      updatedAt: DateTime.now(),
+    );
+    proposals[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<List<ShiftSwapNotification>> getNotifications() async => notifications;
+
+  @override
+  Future<void> markNotificationRead(String notificationId) async {
+    final idx = notifications.indexWhere((n) => n.id == notificationId);
+    if (idx >= 0) {
+      notifications[idx] = notifications[idx].copyWith(isRead: true);
+    }
   }
 }

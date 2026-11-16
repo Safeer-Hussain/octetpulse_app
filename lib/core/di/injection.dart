@@ -7,15 +7,18 @@ import '../../data/repositories/attendance_repository_impl.dart';
 import '../../data/repositories/dispatch_repository_impl.dart';
 import '../../data/repositories/geofence_repository_impl.dart';
 import '../../data/repositories/payroll_repository_impl.dart';
+import '../../data/repositories/shift_swap_repository_impl.dart';
 import '../../data/repositories/voip_repository_impl.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/dispatch_repository.dart';
 import '../../domain/repositories/geofence_repository.dart';
 import '../../domain/repositories/payroll_repository.dart';
+import '../../domain/repositories/shift_swap_repository.dart';
 import '../../domain/repositories/voip_repository.dart';
 import '../../presentation/ai_copilot/cubit/ai_copilot_cubit.dart';
 import '../../presentation/attendance/bloc/attendance_bloc.dart';
 import '../../presentation/payroll/bloc/payroll_bloc.dart';
+import '../../presentation/shift_swap/bloc/shift_swap_bloc.dart';
 import '../../presentation/tracking/bloc/dispatch_bloc.dart';
 import '../../presentation/voip/bloc/voip_bloc.dart';
 import '../theme/theme_cubit.dart';
@@ -67,6 +70,12 @@ Future<void> initDependencies({SharedPreferences? prefs}) async {
     );
   }
 
+  if (!getIt.isRegistered<ShiftSwapRepository>()) {
+    getIt.registerLazySingleton<ShiftSwapRepository>(
+      () => ShiftSwapRepositoryImpl(getIt<AppDatabase>()),
+    );
+  }
+
   if (!getIt.isRegistered<ThemeCubit>()) {
     getIt.registerFactory<ThemeCubit>(
       () => ThemeCubit(
@@ -103,6 +112,12 @@ Future<void> initDependencies({SharedPreferences? prefs}) async {
 
   if (!getIt.isRegistered<VoipBloc>()) {
     getIt.registerFactory<VoipBloc>(() => VoipBloc(getIt<VoipRepository>()));
+  }
+
+  if (!getIt.isRegistered<ShiftSwapBloc>()) {
+    getIt.registerFactory<ShiftSwapBloc>(
+      () => ShiftSwapBloc(getIt<ShiftSwapRepository>()),
+    );
   }
 
   if (!getIt.isRegistered<AiCopilotCubit>()) {

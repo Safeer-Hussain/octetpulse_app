@@ -7,6 +7,7 @@ import 'package:octet_pulse_app/presentation/ai_copilot/cubit/ai_copilot_cubit.d
 import 'package:octet_pulse_app/presentation/attendance/bloc/attendance_bloc.dart';
 import 'package:octet_pulse_app/presentation/payroll/bloc/payroll_bloc.dart';
 import 'package:octet_pulse_app/presentation/shell/adaptive_scaffold.dart';
+import 'package:octet_pulse_app/presentation/shift_swap/bloc/shift_swap_bloc.dart';
 import 'package:octet_pulse_app/presentation/tracking/bloc/dispatch_bloc.dart';
 import 'package:octet_pulse_app/presentation/voip/bloc/voip_bloc.dart';
 
@@ -21,6 +22,7 @@ void main() {
     final fakePayroll = FakePayrollRepository();
     final fakeVoip = FakeVoipRepository();
     final fakeDispatch = FakeDispatchRepository();
+    final fakeShiftSwap = FakeShiftSwapRepository();
     final mockDb = MockAppDatabase();
 
     await tester.pumpWidget(
@@ -33,6 +35,9 @@ void main() {
           BlocProvider<PayrollBloc>(create: (_) => PayrollBloc(fakePayroll)),
           BlocProvider<DispatchBloc>(create: (_) => DispatchBloc(fakeDispatch)),
           BlocProvider<VoipBloc>(create: (_) => VoipBloc(fakeVoip)),
+          BlocProvider<ShiftSwapBloc>(
+            create: (_) => ShiftSwapBloc(fakeShiftSwap),
+          ),
           BlocProvider<AiCopilotCubit>(create: (_) => AiCopilotCubit(mockDb)),
         ],
         child: MaterialApp(
@@ -54,6 +59,7 @@ void main() {
     final fakePayroll = FakePayrollRepository();
     final fakeVoip = FakeVoipRepository();
     final fakeDispatch = FakeDispatchRepository();
+    final fakeShiftSwap = FakeShiftSwapRepository();
     final mockDb = MockAppDatabase();
     final themeCubit = ThemeCubit();
 
@@ -67,6 +73,9 @@ void main() {
           BlocProvider<PayrollBloc>(create: (_) => PayrollBloc(fakePayroll)),
           BlocProvider<DispatchBloc>(create: (_) => DispatchBloc(fakeDispatch)),
           BlocProvider<VoipBloc>(create: (_) => VoipBloc(fakeVoip)),
+          BlocProvider<ShiftSwapBloc>(
+            create: (_) => ShiftSwapBloc(fakeShiftSwap),
+          ),
           BlocProvider<AiCopilotCubit>(create: (_) => AiCopilotCubit(mockDb)),
         ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(
@@ -101,6 +110,7 @@ void main() {
       final fakePayroll = FakePayrollRepository();
       final fakeVoip = FakeVoipRepository();
       final fakeDispatch = FakeDispatchRepository();
+      final fakeShiftSwap = FakeShiftSwapRepository();
       final mockDb = MockAppDatabase();
 
       // Set 800x360 landscape resolution
@@ -120,6 +130,9 @@ void main() {
               create: (_) => DispatchBloc(fakeDispatch),
             ),
             BlocProvider<VoipBloc>(create: (_) => VoipBloc(fakeVoip)),
+            BlocProvider<ShiftSwapBloc>(
+              create: (_) => ShiftSwapBloc(fakeShiftSwap),
+            ),
             BlocProvider<AiCopilotCubit>(create: (_) => AiCopilotCubit(mockDb)),
           ],
           child: MaterialApp(

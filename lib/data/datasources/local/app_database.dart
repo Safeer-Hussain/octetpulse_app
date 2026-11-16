@@ -8,7 +8,7 @@ import '../../../domain/services/transcript_simulator.dart';
 
 class AppDatabase {
   static const String _dbName = 'octet_pulse_ledger.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   Database? _database;
 
@@ -76,6 +76,43 @@ class AppDatabase {
             checksumSha256 TEXT NOT NULL,
             waveformsJson TEXT NOT NULL,
             transcriptJson TEXT NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
+    if (oldVersion < 5) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS shift_swap_proposals (
+            id TEXT PRIMARY KEY,
+            requesterId TEXT NOT NULL,
+            requesterName TEXT NOT NULL,
+            requesterRole TEXT NOT NULL,
+            targetPeerId TEXT NOT NULL,
+            targetPeerName TEXT NOT NULL,
+            targetPeerRole TEXT NOT NULL,
+            department TEXT NOT NULL,
+            requesterShiftDate TEXT NOT NULL,
+            requesterShiftType TEXT NOT NULL,
+            targetShiftDate TEXT NOT NULL,
+            targetShiftType TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            counterReason TEXT,
+            rejectionReason TEXT,
+            approvedByLeadName TEXT,
+            status TEXT NOT NULL,
+            createdAt TEXT NOT NULL,
+            updatedAt TEXT NOT NULL
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS shift_swap_notifications (
+            id TEXT PRIMARY KEY,
+            proposalId TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            isRead INTEGER NOT NULL
           )
         ''');
       } catch (_) {}
@@ -230,12 +267,48 @@ class AppDatabase {
         transcriptJson TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE shift_swap_proposals (
+        id TEXT PRIMARY KEY,
+        requesterId TEXT NOT NULL,
+        requesterName TEXT NOT NULL,
+        requesterRole TEXT NOT NULL,
+        targetPeerId TEXT NOT NULL,
+        targetPeerName TEXT NOT NULL,
+        targetPeerRole TEXT NOT NULL,
+        department TEXT NOT NULL,
+        requesterShiftDate TEXT NOT NULL,
+        requesterShiftType TEXT NOT NULL,
+        targetShiftDate TEXT NOT NULL,
+        targetShiftType TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        counterReason TEXT,
+        rejectionReason TEXT,
+        approvedByLeadName TEXT,
+        status TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE shift_swap_notifications (
+        id TEXT PRIMARY KEY,
+        proposalId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        isRead INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> seedInitialDataIfEmpty() async {
     final db = await database;
     await _seedGeofenceZonesIfEmpty(db);
     await _seedVoipRecordingsIfEmpty(db);
+    await _seedShiftSwapsIfEmpty(db);
 
     final count =
         Sqflite.firstIntValue(
@@ -906,6 +979,122 @@ class AppDatabase {
         final batch = db.batch();
         batch.insert('voip_recordings', rec1.toMap());
         batch.insert('voip_recordings', rec2.toMap());
+        await batch.commit(noResult: true);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _seedShiftSwapsIfEmpty(Database db) async {
+    try {
+      final count =
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM shift_swap_proposals'),
+          ) ??
+          0;
+
+      if (count == 0) {
+        final now = DateTime.now();
+        final batch = db.batch();
+
+        // 1. Proposed Swap (Safeer Hussain -> Zainab Tariq)
+        batch.insert('shift_swap_proposals', {
+          'id': 'SWAP-101',
+          'requesterId': 'EMP-101',
+          'requesterName': 'Safeer Hussain',
+          'requesterRole': 'Principal Architect',
+          'targetPeerId': 'EMP-102',
+          'targetPeerName': 'Zainab Tariq',
+          'targetPeerRole': 'Lead Flutter Engineer',
+          'department': 'Mobile Engineering',
+          'requesterShiftDate': now
+              .add(const Duration(days: 1))
+              .toIso8601String(),
+          'requesterShiftType': 'morning',
+          'targetShiftDate': now.add(const Duration(days: 3)).toIso8601String(),
+          'targetShiftType': 'evening',
+          'reason': 'Reviewing client architecture integration with enterprise security board.',
+          'counterReason': null,
+          'rejectionReason': null,
+          'approvedByLeadName': null,
+          'status': 'proposed',
+          'createdAt': now.subtract(const Duration(hours: 4)).toIso8601String(),
+          'updatedAt': now.subtract(const Duration(hours: 4)).toIso8601String(),
+        });
+
+        // 2. Countered Swap (Tariq Mahmood <-> Usman Khan)
+        batch.insert('shift_swap_proposals', {
+          'id': 'SWAP-102',
+          'requesterId': 'EMP-105',
+          'requesterName': 'Tariq Mahmood',
+          'requesterRole': 'Field Operations Lead',
+          'targetPeerId': 'EMP-106',
+          'targetPeerName': 'Usman Khan',
+          'targetPeerRole': 'Senior Field Specialist',
+          'department': 'Field Operations',
+          'requesterShiftDate': now
+              .add(const Duration(days: 2))
+              .toIso8601String(),
+          'requesterShiftType': 'night',
+          'targetShiftDate': now.add(const Duration(days: 4)).toIso8601String(),
+          'targetShiftType': 'morning',
+          'reason': 'Field dispatch vehicle scheduled maintenance.',
+          'counterReason':
+              'Can only cover Thursday evening rotation instead of full night.',
+          'rejectionReason': null,
+          'approvedByLeadName': null,
+          'status': 'countered',
+          'createdAt': now
+              .subtract(const Duration(hours: 12))
+              .toIso8601String(),
+          'updatedAt': now.subtract(const Duration(hours: 2)).toIso8601String(),
+        });
+
+        // 3. Lead Approved Swap (Hamza Malik & Zainab Tariq)
+        batch.insert('shift_swap_proposals', {
+          'id': 'SWAP-103',
+          'requesterId': 'EMP-103',
+          'requesterName': 'Hamza Malik',
+          'requesterRole': 'Senior Mobile Engineer',
+          'targetPeerId': 'EMP-102',
+          'targetPeerName': 'Zainab Tariq',
+          'targetPeerRole': 'Lead Flutter Engineer',
+          'department': 'Mobile Engineering',
+          'requesterShiftDate': now
+              .subtract(const Duration(days: 2))
+              .toIso8601String(),
+          'requesterShiftType': 'morning',
+          'targetShiftDate': now
+              .subtract(const Duration(days: 1))
+              .toIso8601String(),
+          'targetShiftType': 'evening',
+          'reason': 'Attended Flutter 3.47.8 & Android SDK 36 compiler testing summit.',
+          'counterReason': null,
+          'rejectionReason': null,
+          'approvedByLeadName': 'Safeer Hussain (Principal Architect)',
+          'status': 'leadApproved',
+          'createdAt': now.subtract(const Duration(days: 3)).toIso8601String(),
+          'updatedAt': now.subtract(const Duration(days: 1)).toIso8601String(),
+        });
+
+        // Notifications
+        batch.insert('shift_swap_notifications', {
+          'id': 'NOTIF-01',
+          'proposalId': 'SWAP-101',
+          'title': 'New Shift Swap Proposal',
+          'message': 'Safeer Hussain proposed swapping Morning shift for Friday Evening.',
+          'timestamp': now.subtract(const Duration(hours: 4)).toIso8601String(),
+          'isRead': 0,
+        });
+
+        batch.insert('shift_swap_notifications', {
+          'id': 'NOTIF-02',
+          'proposalId': 'SWAP-102',
+          'title': 'Shift Swap Counter Offer',
+          'message': 'Usman Khan countered your shift proposal: Can only cover Thursday evening.',
+          'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(),
+          'isRead': 0,
+        });
+
         await batch.commit(noResult: true);
       }
     } catch (_) {}

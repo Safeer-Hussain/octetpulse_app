@@ -13,6 +13,8 @@ import 'presentation/attendance/bloc/attendance_bloc.dart';
 import 'presentation/attendance/bloc/attendance_event.dart';
 import 'presentation/payroll/bloc/payroll_bloc.dart';
 import 'presentation/payroll/bloc/payroll_event.dart';
+import 'presentation/shift_swap/bloc/shift_swap_bloc.dart';
+import 'presentation/shift_swap/bloc/shift_swap_event.dart';
 import 'presentation/splash/splash_view.dart';
 import 'presentation/tracking/bloc/dispatch_bloc.dart';
 import 'presentation/tracking/bloc/dispatch_event.dart';
@@ -64,6 +66,10 @@ class OctetPulseApp extends StatelessWidget {
         BlocProvider<VoipBloc>(
           create: (_) =>
               getIt<VoipBloc>()..add(const LoadVoipDirectoryAndLogs()),
+        ),
+        BlocProvider<ShiftSwapBloc>(
+          create: (_) =>
+              getIt<ShiftSwapBloc>()..add(const LoadShiftSwapsEvent()),
         ),
         BlocProvider<AiCopilotCubit>(create: (_) => getIt<AiCopilotCubit>()),
       ],
