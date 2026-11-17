@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:octet_pulse_app/domain/entities/attendance_record.dart';
 import 'package:octet_pulse_app/domain/entities/dispatch_task.dart';
 import 'package:octet_pulse_app/domain/entities/employee.dart';
+import 'package:octet_pulse_app/domain/entities/expense_receipt.dart';
 import 'package:octet_pulse_app/domain/entities/field_agent.dart';
 import 'package:octet_pulse_app/domain/entities/geofence_zone.dart';
 import 'package:octet_pulse_app/domain/entities/leave_request.dart';
@@ -14,6 +15,7 @@ import 'package:octet_pulse_app/domain/entities/voip_recording.dart';
 import 'package:octet_pulse_app/domain/entities/voip_telemetry.dart';
 import 'package:octet_pulse_app/domain/repositories/attendance_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/dispatch_repository.dart';
+import 'package:octet_pulse_app/domain/repositories/expense_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/geofence_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/payroll_repository.dart';
 import 'package:octet_pulse_app/domain/repositories/shift_swap_repository.dart';
@@ -422,5 +424,58 @@ class FakeShiftSwapRepository implements ShiftSwapRepository {
     if (idx >= 0) {
       notifications[idx] = notifications[idx].copyWith(isRead: true);
     }
+  }
+}
+
+class FakeExpenseRepository implements ExpenseRepository {
+  List<ExpenseReceipt> expenses = [];
+
+  @override
+  Future<List<ExpenseReceipt>> getExpenses({String? employeeId}) async {
+    if (employeeId != null) {
+      return expenses.where((e) => e.employeeId == employeeId).toList();
+    }
+    return expenses;
+  }
+
+  @override
+  Future<ExpenseReceipt> saveExpense(ExpenseReceipt receipt) async {
+    final idx = expenses.indexWhere((e) => e.id == receipt.id);
+    if (idx >= 0) {
+      expenses[idx] = receipt;
+    } else {
+      expenses.insert(0, receipt);
+    }
+    return receipt;
+  }
+
+  @override
+  Future<ExpenseReceipt> updateExpenseStatus(
+    String receiptId,
+    ExpenseStatus status,
+  ) async {
+    final idx = expenses.indexWhere((e) => e.id == receiptId);
+    if (idx < 0) {
+      throw Exception('Expense not found');
+    }
+    final updated = expenses[idx].copyWith(status: status);
+    expenses[idx] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> deleteExpense(String receiptId) async {
+    expenses.removeWhere((e) => e.id == receiptId);
+  }
+
+  @override
+  Future<double> getTotalReimbursementUsd() async {
+    return expenses
+        .where(
+          (e) =>
+              e.status == ExpenseStatus.submitted ||
+              e.status == ExpenseStatus.approved,
+        )
+        .fold<double>(0.0, (sum, e) => sum + e.usdEquivalent);
   }
 }

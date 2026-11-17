@@ -4,13 +4,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/utils/app_feedback.dart';
 import '../../../core/utils/app_formatters.dart';
 import '../../../domain/entities/payroll_record.dart';
+import '../../expense/bloc/expense_bloc.dart';
+import '../../expense/bloc/expense_state.dart';
+import '../../expense/views/expense_receipt_hub_view.dart';
 import '../bloc/payroll_bloc.dart';
 import '../bloc/payroll_event.dart';
 import '../bloc/payroll_state.dart';
 import 'payslip_breakdown_sheet.dart';
 
-class PayrollLedgerView extends StatelessWidget {
+class PayrollLedgerView extends StatefulWidget {
   const PayrollLedgerView({super.key});
+
+  @override
+  State<PayrollLedgerView> createState() => _PayrollLedgerViewState();
+}
+
+class _PayrollLedgerViewState extends State<PayrollLedgerView> {
+  int _viewMode = 0; // 0 = Payroll Ledger & Slips, 1 = Expense OCR & Receipts
 
   void _openPayslipSheet(
     BuildContext context,
@@ -106,6 +116,15 @@ class PayrollLedgerView extends StatelessWidget {
         final isLandscape =
             MediaQuery.of(context).orientation == Orientation.landscape;
 
+        if (_viewMode == 1) {
+          return Column(
+            children: [
+              _buildModeSwitcher(context, isLandscape),
+              const Expanded(child: ExpenseReceiptHubView()),
+            ],
+          );
+        }
+
         return Scaffold(
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'fab_payroll_disburse',
@@ -114,9 +133,56 @@ class PayrollLedgerView extends StatelessWidget {
             icon: const Icon(Icons.play_circle_outline),
             label: const Text('Run Batch'),
           ),
-          body: isLandscape
-              ? _buildLandscapeLayout(context, state)
-              : _buildPortraitLayout(context, state),
+          body: Column(
+            children: [
+              _buildModeSwitcher(context, isLandscape),
+              Expanded(
+                child: isLandscape
+                    ? _buildLandscapeLayout(context, state)
+                    : _buildPortraitLayout(context, state),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModeSwitcher(BuildContext context, bool isLandscape) {
+    return BlocBuilder<ExpenseBloc, ExpenseState>(
+      builder: (context, expenseState) {
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isLandscape ? 12 : 16,
+            vertical: isLandscape ? 4 : 8,
+          ),
+          child: SegmentedButton<int>(
+            segments: [
+              const ButtonSegment<int>(
+                value: 0,
+                icon: Icon(Icons.receipt_long, size: 16),
+                label: Text('Payroll Ledger', style: TextStyle(fontSize: 12)),
+              ),
+              ButtonSegment<int>(
+                value: 1,
+                icon: Badge(
+                  isLabelVisible: expenseState.pendingCount > 0,
+                  label: Text(expenseState.pendingCount.toString()),
+                  child: const Icon(Icons.document_scanner, size: 16),
+                ),
+                label: const Text(
+                  'Expense OCR & Claims',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+            selected: {_viewMode},
+            onSelectionChanged: (Set<int> newSelection) {
+              setState(() {
+                _viewMode = newSelection.first;
+              });
+            },
+          ),
         );
       },
     );

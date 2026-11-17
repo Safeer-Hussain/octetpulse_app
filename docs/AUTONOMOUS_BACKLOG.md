@@ -30,7 +30,7 @@ This backlog defines the 25 granular daily engineering sprints for OctetPulse. E
   - Push notifications simulation via BLoC stream and SQLite persistence.
   - Unit tests for swap state machine transitions.
 
-- [ ] **Sprint 5: Optical Expense Receipt OCR Scanner & Currency Converter**
+- [x] **Sprint 5: Optical Expense Receipt OCR Scanner & Currency Converter**
   - Add mobile camera expense capture interface with client-side OCR parser for fuel, client lunch, and transit receipts.
   - Automatic tax extraction and multi-currency conversion to USD base.
   - Integration with `PayrollBloc` for expense reimbursement line items.

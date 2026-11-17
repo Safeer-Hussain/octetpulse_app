@@ -8,7 +8,7 @@ import '../../../domain/services/transcript_simulator.dart';
 
 class AppDatabase {
   static const String _dbName = 'octet_pulse_ledger.db';
-  static const int _dbVersion = 5;
+  static const int _dbVersion = 6;
 
   Database? _database;
 
@@ -113,6 +113,29 @@ class AppDatabase {
             message TEXT NOT NULL,
             timestamp TEXT NOT NULL,
             isRead INTEGER NOT NULL
+          )
+        ''');
+      } catch (_) {}
+    }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS expense_receipts (
+            id TEXT PRIMARY KEY,
+            employeeId TEXT NOT NULL,
+            employeeName TEXT NOT NULL,
+            merchantName TEXT NOT NULL,
+            category TEXT NOT NULL,
+            currency TEXT NOT NULL,
+            rawAmount REAL NOT NULL,
+            taxAmount REAL NOT NULL,
+            exchangeRateToUsd REAL NOT NULL,
+            usdEquivalent REAL NOT NULL,
+            receiptDate TEXT NOT NULL,
+            rawOcrText TEXT NOT NULL,
+            status TEXT NOT NULL,
+            reimbursementBatchId TEXT,
+            createdAt TEXT NOT NULL
           )
         ''');
       } catch (_) {}
@@ -302,6 +325,26 @@ class AppDatabase {
         isRead INTEGER NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE expense_receipts (
+        id TEXT PRIMARY KEY,
+        employeeId TEXT NOT NULL,
+        employeeName TEXT NOT NULL,
+        merchantName TEXT NOT NULL,
+        category TEXT NOT NULL,
+        currency TEXT NOT NULL,
+        rawAmount REAL NOT NULL,
+        taxAmount REAL NOT NULL,
+        exchangeRateToUsd REAL NOT NULL,
+        usdEquivalent REAL NOT NULL,
+        receiptDate TEXT NOT NULL,
+        rawOcrText TEXT NOT NULL,
+        status TEXT NOT NULL,
+        reimbursementBatchId TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<void> seedInitialDataIfEmpty() async {
@@ -309,6 +352,7 @@ class AppDatabase {
     await _seedGeofenceZonesIfEmpty(db);
     await _seedVoipRecordingsIfEmpty(db);
     await _seedShiftSwapsIfEmpty(db);
+    await _seedExpenseReceiptsIfEmpty(db);
 
     final count =
         Sqflite.firstIntValue(
@@ -1093,6 +1137,128 @@ class AppDatabase {
           'message': 'Usman Khan countered your shift proposal: Can only cover Thursday evening.',
           'timestamp': now.subtract(const Duration(hours: 2)).toIso8601String(),
           'isRead': 0,
+        });
+
+        await batch.commit(noResult: true);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _seedExpenseReceiptsIfEmpty(Database db) async {
+    try {
+      final count =
+          Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM expense_receipts'),
+          ) ??
+          0;
+
+      if (count == 0) {
+        final now = DateTime.now();
+        final batch = db.batch();
+
+        // 1. Shell Fuel Station
+        batch.insert('expense_receipts', {
+          'id': 'EXP-101',
+          'employeeId': 'EMP-101',
+          'employeeName': 'Safeer Hussain',
+          'merchantName': 'Shell Fuel Station - DHA Phase 5',
+          'category': 'fuel',
+          'currency': 'pkr',
+          'rawAmount': 8500.0,
+          'taxAmount': 1275.0,
+          'exchangeRateToUsd': 0.0036,
+          'usdEquivalent': 30.60,
+          'receiptDate': now
+              .subtract(const Duration(days: 1))
+              .toIso8601String(),
+          'rawOcrText': '''
+SHELL PAKISTAN LIMITED
+DHA Phase 5 Filling Station, Lahore
+NTN: 0712394-1
+Date: 2026-11-16  Time: 14:22
+Pump: 04  Nozzle: 02
+Fuel Type: V-Power Petrol
+Volume: 28.33 Litres
+Rate: PKR 300.00/L
+Subtotal: PKR 7,225.00
+GST (17%): PKR 1,275.00
+Grand Total: PKR 8,500.00
+Payment Mode: Corporate Visa Card Ending *8821
+Approved - Auth Code: 492011
+''',
+          'status': 'submitted',
+          'reimbursementBatchId': null,
+          'createdAt': now.subtract(const Duration(days: 1)).toIso8601String(),
+        });
+
+        // 2. Pearl Continental Dining
+        batch.insert('expense_receipts', {
+          'id': 'EXP-102',
+          'employeeId': 'EMP-101',
+          'employeeName': 'Safeer Hussain',
+          'merchantName': 'Pearl Continental Executive Dining',
+          'category': 'clientLunch',
+          'currency': 'pkr',
+          'rawAmount': 14250.0,
+          'taxAmount': 2137.50,
+          'exchangeRateToUsd': 0.0036,
+          'usdEquivalent': 51.30,
+          'receiptDate': now
+              .subtract(const Duration(days: 3))
+              .toIso8601String(),
+          'rawOcrText': '''
+PEARL CONTINENTAL HOTEL LAHORE
+Marco Polo Restaurant - Client Strategy Lunch
+Invoice #: PC-99412
+Date: 2026-11-14
+Guests: 4 Covers
+----------------------------------------
+Executive Buffet x 4       PKR 10,800.00
+Fresh Seasonal Juices x 4   PKR  1,312.50
+Subtotal                   PKR 12,112.50
+PRA Sales Tax (16%)        PKR  1,938.00
+Service Charge             PKR    199.50
+Total Amount:              PKR 14,250.00
+----------------------------------------
+Paid by Client Solutions Account
+Signature: Safeer Hussain
+''',
+          'status': 'approved',
+          'reimbursementBatchId': null,
+          'createdAt': now.subtract(const Duration(days: 3)).toIso8601String(),
+        });
+
+        // 3. Uber Transit
+        batch.insert('expense_receipts', {
+          'id': 'EXP-103',
+          'employeeId': 'EMP-102',
+          'employeeName': 'Zainab Tariq',
+          'merchantName': 'Uber Airport Executive Transit',
+          'category': 'transit',
+          'currency': 'usd',
+          'rawAmount': 48.50,
+          'taxAmount': 4.25,
+          'exchangeRateToUsd': 1.0,
+          'usdEquivalent': 48.50,
+          'receiptDate': now
+              .subtract(const Duration(days: 5))
+              .toIso8601String(),
+          'rawOcrText': '''
+UBER TECHNOLOGIES INC.
+Trip Receipt - Airport Business Express
+Date: 2026-11-12  Trip ID: ub-892410-us
+Pickup: Terminal 2 Executive Gate
+Dropoff: Downtown Innovation Hub
+Trip Distance: 24.8 Miles
+Base Fare: \$36.50
+Airport Toll & Surcharge: \$7.75
+State Transit Tax: \$4.25
+Total Charged: \$48.50 USD
+Payment: Corporate Mastercard *4419
+''',
+          'status': 'reimbursed',
+          'reimbursementBatchId': 'BATCH-2026-11-DISB',
+          'createdAt': now.subtract(const Duration(days: 5)).toIso8601String(),
         });
 
         await batch.commit(noResult: true);

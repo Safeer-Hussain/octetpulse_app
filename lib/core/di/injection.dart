@@ -5,18 +5,21 @@ import '../../data/datasources/local/app_database.dart';
 import '../../data/datasources/native/voip_native_bridge.dart';
 import '../../data/repositories/attendance_repository_impl.dart';
 import '../../data/repositories/dispatch_repository_impl.dart';
+import '../../data/repositories/expense_repository_impl.dart';
 import '../../data/repositories/geofence_repository_impl.dart';
 import '../../data/repositories/payroll_repository_impl.dart';
 import '../../data/repositories/shift_swap_repository_impl.dart';
 import '../../data/repositories/voip_repository_impl.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/dispatch_repository.dart';
+import '../../domain/repositories/expense_repository.dart';
 import '../../domain/repositories/geofence_repository.dart';
 import '../../domain/repositories/payroll_repository.dart';
 import '../../domain/repositories/shift_swap_repository.dart';
 import '../../domain/repositories/voip_repository.dart';
 import '../../presentation/ai_copilot/cubit/ai_copilot_cubit.dart';
 import '../../presentation/attendance/bloc/attendance_bloc.dart';
+import '../../presentation/expense/bloc/expense_bloc.dart';
 import '../../presentation/payroll/bloc/payroll_bloc.dart';
 import '../../presentation/shift_swap/bloc/shift_swap_bloc.dart';
 import '../../presentation/tracking/bloc/dispatch_bloc.dart';
@@ -76,6 +79,12 @@ Future<void> initDependencies({SharedPreferences? prefs}) async {
     );
   }
 
+  if (!getIt.isRegistered<ExpenseRepository>()) {
+    getIt.registerLazySingleton<ExpenseRepository>(
+      () => ExpenseRepositoryImpl(getIt<AppDatabase>()),
+    );
+  }
+
   if (!getIt.isRegistered<ThemeCubit>()) {
     getIt.registerFactory<ThemeCubit>(
       () => ThemeCubit(
@@ -117,6 +126,12 @@ Future<void> initDependencies({SharedPreferences? prefs}) async {
   if (!getIt.isRegistered<ShiftSwapBloc>()) {
     getIt.registerFactory<ShiftSwapBloc>(
       () => ShiftSwapBloc(getIt<ShiftSwapRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ExpenseBloc>()) {
+    getIt.registerFactory<ExpenseBloc>(
+      () => ExpenseBloc(getIt<ExpenseRepository>()),
     );
   }
 

@@ -11,6 +11,8 @@ import 'core/theme/theme_cubit.dart';
 import 'presentation/ai_copilot/cubit/ai_copilot_cubit.dart';
 import 'presentation/attendance/bloc/attendance_bloc.dart';
 import 'presentation/attendance/bloc/attendance_event.dart';
+import 'presentation/expense/bloc/expense_bloc.dart';
+import 'presentation/expense/bloc/expense_event.dart';
 import 'presentation/payroll/bloc/payroll_bloc.dart';
 import 'presentation/payroll/bloc/payroll_event.dart';
 import 'presentation/shift_swap/bloc/shift_swap_bloc.dart';
@@ -70,6 +72,9 @@ class OctetPulseApp extends StatelessWidget {
         BlocProvider<ShiftSwapBloc>(
           create: (_) =>
               getIt<ShiftSwapBloc>()..add(const LoadShiftSwapsEvent()),
+        ),
+        BlocProvider<ExpenseBloc>(
+          create: (_) => getIt<ExpenseBloc>()..add(const LoadExpensesEvent()),
         ),
         BlocProvider<AiCopilotCubit>(create: (_) => getIt<AiCopilotCubit>()),
       ],
