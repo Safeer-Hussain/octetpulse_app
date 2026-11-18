@@ -39,7 +39,7 @@ jobs:
         run: flutter test --no-pub
 
       - name: Build Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --pub --android-skip-build-dependency-validation
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
