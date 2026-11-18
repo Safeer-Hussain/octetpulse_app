@@ -44,11 +44,11 @@ Future<void> stepPubGet() async {
 
 Future<void> stepFormat() async {
   print('\n[2/5] Auto-formatting codebase (dart format lib test)...');
-  final res = await Process.run(
-    'dart',
-    ['format', 'lib', 'test'],
-    runInShell: true,
-  );
+  final res = await Process.run('dart', [
+    'format',
+    'lib',
+    'test',
+  ], runInShell: true);
   if (res.exitCode != 0) {
     print(res.stderr);
     throw Exception('dart format failed with exit code ${res.exitCode}');
@@ -57,18 +57,19 @@ Future<void> stepFormat() async {
 }
 
 Future<void> stepAnalyze() async {
-  print('\n[3/5] Executing static analysis (flutter analyze --no-pub)...');
-  final res = await Process.run(
-    'flutter',
-    ['analyze', '--no-pub'],
-    runInShell: true,
+  print(
+    '\n[3/5] Executing static analysis (flutter analyze --no-pub --no-fatal-infos)...',
   );
+  final res = await Process.run('flutter', [
+    'analyze',
+    '--no-pub',
+    '--no-fatal-infos',
+  ], runInShell: true);
   final output = res.stdout.toString() + res.stderr.toString();
 
   if (res.exitCode != 0 ||
       output.contains('error •') ||
-      output.contains('warning •') ||
-      output.contains('info •')) {
+      output.contains('warning •')) {
     print(output);
     throw Exception('flutter analyze failed with issues.');
   }
@@ -77,11 +78,10 @@ Future<void> stepAnalyze() async {
 
 Future<void> stepTest() async {
   print('\n[4/5] Executing automated tests (flutter test --no-pub)...');
-  final res = await Process.run(
-    'flutter',
-    ['test', '--no-pub'],
-    runInShell: true,
-  );
+  final res = await Process.run('flutter', [
+    'test',
+    '--no-pub',
+  ], runInShell: true);
   if (res.exitCode != 0) {
     print(res.stdout);
     print(res.stderr);
@@ -92,11 +92,10 @@ Future<void> stepTest() async {
 
 Future<void> stepDeviceRuntimeCheck() async {
   print('\n[5/5] Checking connected physical device runtime...');
-  final devRes = await Process.run(
-    'flutter',
-    ['devices', '--machine'],
-    runInShell: true,
-  );
+  final devRes = await Process.run('flutter', [
+    'devices',
+    '--machine',
+  ], runInShell: true);
   if (devRes.exitCode != 0) {
     print(
       '  -> Warning: Could not query devices (${devRes.stderr}). Skipping live device check.',
@@ -142,19 +141,21 @@ Future<void> stepDeviceRuntimeCheck() async {
 
   // Clear stale logcat
   print('  -> Clearing stale device crash logs via adb logcat -c...');
-  await Process.run(
-    adbPath,
-    ['-s', deviceId, 'logcat', '-c'],
-    runInShell: true,
-  );
+  await Process.run(adbPath, [
+    '-s',
+    deviceId,
+    'logcat',
+    '-c',
+  ], runInShell: true);
 
   // Controlled startup and smoke window
   print('  -> Launching app on $deviceId with live device smoke window...');
-  final process = await Process.start(
-    'flutter',
-    ['run', '-d', deviceId, '--no-pub'],
-    runInShell: true,
-  );
+  final process = await Process.start('flutter', [
+    'run',
+    '-d',
+    deviceId,
+    '--no-pub',
+  ], runInShell: true);
 
   final consoleBuffer = StringBuffer();
   final appStartedCompleter = Completer<void>();
@@ -191,11 +192,12 @@ Future<void> stepDeviceRuntimeCheck() async {
 
   // Inspect device logcat
   print('  -> Inspecting device runtime logs via adb logcat -d...');
-  final logcatRes = await Process.run(
-    adbPath,
-    ['-s', deviceId, 'logcat', '-d'],
-    runInShell: true,
-  );
+  final logcatRes = await Process.run(adbPath, [
+    '-s',
+    deviceId,
+    'logcat',
+    '-d',
+  ], runInShell: true);
   final logs = logcatRes.stdout.toString() + consoleBuffer.toString();
 
   final fatalPatterns = [

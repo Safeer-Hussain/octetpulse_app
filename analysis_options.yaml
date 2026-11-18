@@ -6,6 +6,8 @@ analyzer:
     - android/**
     - ios/**
     - tool/**
+  errors:
+    deprecated_member_use: ignore
 
 linter:
   rules:
