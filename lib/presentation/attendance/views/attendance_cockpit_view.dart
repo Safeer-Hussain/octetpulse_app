@@ -14,6 +14,7 @@ import '../../shift_swap/bloc/shift_swap_bloc.dart';
 import '../../shift_swap/bloc/shift_swap_state.dart';
 import '../../shift_swap/views/shift_swap_exchange_view.dart';
 import 'leave_request_modal.dart';
+import 'facial_liveness_verification_sheet.dart';
 
 class AttendanceCockpitView extends StatefulWidget {
   const AttendanceCockpitView({super.key});
@@ -88,20 +89,30 @@ class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
         return Scaffold(
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'fab_attendance_clockin',
-            onPressed: () {
+            onPressed: () async {
               if (state.isClockedIn) {
                 context.read<AttendanceBloc>().add(const ClockOutEvent());
               } else {
-                context.read<AttendanceBloc>().add(
-                  ClockInEvent(
-                    employeeId: 'EMP-101',
-                    employeeName: 'Safeer Hussain',
-                    latitude: state.currentLatitude,
-                    longitude: state.currentLongitude,
-                    isWithinGeofence: state.isWithinGeofence,
-                    geofenceDistanceMeters: state.geofenceDistanceMeters,
-                  ),
+                final attestation = await FacialLivenessVerificationSheet.show(
+                  context,
+                  employeeId: 'EMP-101',
+                  employeeName: 'Safeer Hussain',
                 );
+                if (attestation != null && context.mounted) {
+                  context.read<AttendanceBloc>().add(
+                    ClockInEvent(
+                      employeeId: 'EMP-101',
+                      employeeName: 'Safeer Hussain',
+                      latitude: state.currentLatitude,
+                      longitude: state.currentLongitude,
+                      isWithinGeofence: state.isWithinGeofence,
+                      geofenceDistanceMeters: state.geofenceDistanceMeters,
+                      livenessAttestationHash: attestation.attestationHash,
+                      isBiometricallyVerified: true,
+                      livenessLuxLevel: attestation.luxLevel,
+                    ),
+                  );
+                }
               }
             },
             icon: Icon(state.isClockedIn ? Icons.logout : Icons.login),
@@ -409,6 +420,43 @@ class _AttendanceCockpitViewState extends State<AttendanceCockpitView> {
                 ],
               ),
             ),
+            if (isClockedIn &&
+                state.currentRecord?.isBiometricallyVerified == true) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.secondary.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.verified_user,
+                      color: colorScheme.secondary,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Biometric Anti-Spoofing Verified: Liveness hash attested (${state.currentRecord?.livenessLuxLevel?.toStringAsFixed(1) ?? '120.0'} lux)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Wrap(
               alignment: WrapAlignment.spaceBetween,

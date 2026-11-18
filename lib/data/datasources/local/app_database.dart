@@ -8,7 +8,7 @@ import '../../../domain/services/transcript_simulator.dart';
 
 class AppDatabase {
   static const String _dbName = 'octet_pulse_ledger.db';
-  static const int _dbVersion = 6;
+  static const int _dbVersion = 7;
 
   Database? _database;
 
@@ -140,6 +140,19 @@ class AppDatabase {
         ''');
       } catch (_) {}
     }
+    if (oldVersion < 7) {
+      try {
+        await db.execute(
+          'ALTER TABLE attendance ADD COLUMN livenessAttestationHash TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE attendance ADD COLUMN isBiometricallyVerified INTEGER NOT NULL DEFAULT 0',
+        );
+        await db.execute(
+          'ALTER TABLE attendance ADD COLUMN livenessLuxLevel REAL',
+        );
+      } catch (_) {}
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -169,7 +182,10 @@ class AppDatabase {
         isWithinGeofence INTEGER NOT NULL,
         latitude REAL NOT NULL,
         longitude REAL NOT NULL,
-        geofenceDistanceMeters REAL NOT NULL
+        geofenceDistanceMeters REAL NOT NULL,
+        livenessAttestationHash TEXT,
+        isBiometricallyVerified INTEGER NOT NULL DEFAULT 0,
+        livenessLuxLevel REAL
       )
     ''');
 

@@ -36,7 +36,7 @@ This backlog defines the 25 granular daily engineering sprints for OctetPulse. E
   - Integration with `PayrollBloc` for expense reimbursement line items.
   - Unit tests for regex-based OCR receipt token parsing.
 
-- [ ] **Sprint 6: Biometric Facial Liveness & Anti-Spoofing Clock-In Check**
+- [x] **Sprint 6: Biometric Facial Liveness & Anti-Spoofing Clock-In Check**
   - Implement front camera liveness challenge (blink, nod, smile detection) before clock-in confirmation.
   - Store cryptographic attestation hash in `attendance` SQLite ledger.
   - Fallback authentication flow when lighting is below threshold.

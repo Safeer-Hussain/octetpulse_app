@@ -18,6 +18,9 @@ class ClockInEvent extends AttendanceEvent {
   final double longitude;
   final bool isWithinGeofence;
   final double geofenceDistanceMeters;
+  final String? livenessAttestationHash;
+  final bool isBiometricallyVerified;
+  final double? livenessLuxLevel;
 
   const ClockInEvent({
     required this.employeeId,
@@ -26,6 +29,9 @@ class ClockInEvent extends AttendanceEvent {
     required this.longitude,
     required this.isWithinGeofence,
     required this.geofenceDistanceMeters,
+    this.livenessAttestationHash,
+    this.isBiometricallyVerified = false,
+    this.livenessLuxLevel,
   });
 
   @override
@@ -36,6 +42,9 @@ class ClockInEvent extends AttendanceEvent {
     longitude,
     isWithinGeofence,
     geofenceDistanceMeters,
+    livenessAttestationHash,
+    isBiometricallyVerified,
+    livenessLuxLevel,
   ];
 }
 

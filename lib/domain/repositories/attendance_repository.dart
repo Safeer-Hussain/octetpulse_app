@@ -11,6 +11,9 @@ abstract class AttendanceRepository {
     required double longitude,
     required bool isWithinGeofence,
     required double geofenceDistanceMeters,
+    String? livenessAttestationHash,
+    bool isBiometricallyVerified = false,
+    double? livenessLuxLevel,
   });
   Future<AttendanceRecord> toggleBreak({required String recordId});
   Future<AttendanceRecord> clockOut({required String recordId});

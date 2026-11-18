@@ -13,6 +13,9 @@ class AttendanceRecord extends Equatable {
   final double latitude;
   final double longitude;
   final double geofenceDistanceMeters;
+  final String? livenessAttestationHash;
+  final bool isBiometricallyVerified;
+  final double? livenessLuxLevel;
 
   const AttendanceRecord({
     required this.id,
@@ -26,6 +29,9 @@ class AttendanceRecord extends Equatable {
     required this.latitude,
     required this.longitude,
     required this.geofenceDistanceMeters,
+    this.livenessAttestationHash,
+    this.isBiometricallyVerified = false,
+    this.livenessLuxLevel,
   });
 
   AttendanceRecord copyWith({
@@ -40,6 +46,9 @@ class AttendanceRecord extends Equatable {
     double? latitude,
     double? longitude,
     double? geofenceDistanceMeters,
+    String? livenessAttestationHash,
+    bool? isBiometricallyVerified,
+    double? livenessLuxLevel,
   }) {
     return AttendanceRecord(
       id: id ?? this.id,
@@ -54,6 +63,11 @@ class AttendanceRecord extends Equatable {
       longitude: longitude ?? this.longitude,
       geofenceDistanceMeters:
           geofenceDistanceMeters ?? this.geofenceDistanceMeters,
+      livenessAttestationHash:
+          livenessAttestationHash ?? this.livenessAttestationHash,
+      isBiometricallyVerified:
+          isBiometricallyVerified ?? this.isBiometricallyVerified,
+      livenessLuxLevel: livenessLuxLevel ?? this.livenessLuxLevel,
     );
   }
 
@@ -70,5 +84,8 @@ class AttendanceRecord extends Equatable {
     latitude,
     longitude,
     geofenceDistanceMeters,
+    livenessAttestationHash,
+    isBiometricallyVerified,
+    livenessLuxLevel,
   ];
 }

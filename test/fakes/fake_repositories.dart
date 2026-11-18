@@ -40,6 +40,9 @@ class FakeAttendanceRepository implements AttendanceRepository {
     required double longitude,
     required bool isWithinGeofence,
     required double geofenceDistanceMeters,
+    String? livenessAttestationHash,
+    bool isBiometricallyVerified = false,
+    double? livenessLuxLevel,
   }) async {
     final record = AttendanceRecord(
       id: 'ATT-TEST-1',
@@ -52,6 +55,9 @@ class FakeAttendanceRepository implements AttendanceRepository {
       latitude: latitude,
       longitude: longitude,
       geofenceDistanceMeters: geofenceDistanceMeters,
+      livenessAttestationHash: livenessAttestationHash,
+      isBiometricallyVerified: isBiometricallyVerified,
+      livenessLuxLevel: livenessLuxLevel,
     );
     records.insert(0, record);
     return record;

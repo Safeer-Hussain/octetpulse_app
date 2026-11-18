@@ -73,6 +73,9 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
         longitude: event.longitude,
         isWithinGeofence: event.isWithinGeofence,
         geofenceDistanceMeters: event.geofenceDistanceMeters,
+        livenessAttestationHash: event.livenessAttestationHash,
+        isBiometricallyVerified: event.isBiometricallyVerified,
+        livenessLuxLevel: event.livenessLuxLevel,
       );
 
       final updatedHistory = [record, ...state.history];
@@ -80,8 +83,9 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
         state.copyWith(
           currentRecord: record,
           history: updatedHistory,
-          feedbackMessage:
-              'Clocked In successfully at ${AppConstants.hqLocationName}.',
+          feedbackMessage: event.isBiometricallyVerified
+              ? 'Clocked In with Biometric Liveness Attestation at ${AppConstants.hqLocationName}.'
+              : 'Clocked In successfully at ${AppConstants.hqLocationName}.',
         ),
       );
     } catch (e) {

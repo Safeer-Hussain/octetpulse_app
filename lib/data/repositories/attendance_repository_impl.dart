@@ -40,6 +40,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required double longitude,
     required bool isWithinGeofence,
     required double geofenceDistanceMeters,
+    String? livenessAttestationHash,
+    bool isBiometricallyVerified = false,
+    double? livenessLuxLevel,
   }) async {
     final db = await _db.database;
     final now = DateTime.now();
@@ -55,6 +58,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       latitude: latitude,
       longitude: longitude,
       geofenceDistanceMeters: geofenceDistanceMeters,
+      livenessAttestationHash: livenessAttestationHash,
+      isBiometricallyVerified: isBiometricallyVerified,
+      livenessLuxLevel: livenessLuxLevel,
     );
 
     await db.insert('attendance', {
@@ -69,6 +75,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       'latitude': record.latitude,
       'longitude': record.longitude,
       'geofenceDistanceMeters': record.geofenceDistanceMeters,
+      'livenessAttestationHash': record.livenessAttestationHash,
+      'isBiometricallyVerified': record.isBiometricallyVerified ? 1 : 0,
+      'livenessLuxLevel': record.livenessLuxLevel,
     });
 
     return record;
@@ -194,6 +203,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       latitude: (map['latitude'] as num).toDouble(),
       longitude: (map['longitude'] as num).toDouble(),
       geofenceDistanceMeters: (map['geofenceDistanceMeters'] as num).toDouble(),
+      livenessAttestationHash: map['livenessAttestationHash'] as String?,
+      isBiometricallyVerified: (map['isBiometricallyVerified'] as int?) == 1,
+      livenessLuxLevel: (map['livenessLuxLevel'] as num?)?.toDouble(),
     );
   }
 
